@@ -1,0 +1,100 @@
+Hosting a Django App on Heroku: 
+--------------------------------------------------------------
+
+pip install whitenoise gunicorn django-heroku python-dotenv
+
+--------------------------------------------------------------
+
+in project directory, create the following files: 
+
+    [cl:] echo  web: gunicorn projectname.wsgi  >> Procfile
+    
+    [cl:] pip freeze > requirements.txt
+        (review requirements.txt to be sure it does not include anything unnecessary)
+
+    [cl:] echo python-3.8.2 >> runtime.txt
+        (or whatever python version currently using)
+
+    [cl:] echo >> .env
+
+    [cl:] echo '.env' >> .gitignore
+
+---------------------------------------------------------------
+
+in settings.py add the following:
+
+    import dj_database_url
+    import dotenv
+
+    ALLOWED_HOSTS = [
+        '*',
+        '127.0.0.1',
+        '.herokuapp.com'
+    ]
+
+    MIDDLEWARE = [
+        'django.middleware.security.SecurityMiddleware',
+        'whitenoise.middleware.WhiteNoiseMiddleware',
+        ...
+    ]
+
+
+    // replace DATABASES section with this, remove other instance of DEBUG at top of file
+    dotenv_file = os.path.join(BASE_DIR, ".env")
+    if os.path.isfile(dotenv_file):
+        DEBUG = True
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+            }
+        }
+        
+    else:
+        DEBUG = False
+        DATABASES['default'] = dj_database_url.config(conn_max_age=600)
+
+
+
+
+    STATIC_ROOT = os.path.join(BASE_DIR, 'pages/static')
+    STATIC_URL = '/static/'
+
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+    # Configure Django App for Heroku.
+    import django_heroku
+    django_heroku.settings(locals())
+
+----------------------------------------------------------------------------
+change requirements.txt to look like this (add whatever else you need)
+
+bleach==3.1.1
+decorator==4.4.2
+dj-database-url==0.5.0
+Django==3.0.4
+django-allauth==0.41.0
+django-ckeditor==5.9.0
+django-cors-headers==3.2.1
+django-filter==2.2.0
+django-heroku==0.3.1
+django-js-asset==1.2.2
+django-rest-auth==0.9.5
+django-tinymce==2.8.0
+django-widget-tweaks==1.4.8
+django-wysiwyg==0.8.0
+djangorestframework==3.11.0
+gunicorn==20.0.4
+Jinja2==2.11.1
+libsass==0.19.4
+psycopg2==2.8.4
+python-dotenv==0.13.0
+whitenoise==5.0.1
+
+-------------------------------------------------------------------------
+Create your heroku app and follow the direcions to add it into your git:remotes 
+
+(after 'git push heroku master' is successful)
+?? heroku run python manage.py makemigrations 
+heroku run python manage.py migrate 
+heroku run python manage.py createsuperuser
